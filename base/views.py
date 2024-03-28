@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from .models import Room, Topic, Message
-from .forms import RoomForm
+from .forms import RoomForm, UserForm
 
 
 # Create your views here.
@@ -47,7 +47,7 @@ def registerPage(request):
             user = form.save(commit=False)
             user.username = user.username.lower()
             user.save()
-            login(user=user)
+            login(request, user=user)
             return redirect("home")
         else:
             messages.error(request, "An error occurred during registration")
@@ -163,3 +163,16 @@ def deleteMessage(request, pk):
         return redirect("home")
     context = {"obj": message}
     return render(request, "base/delete.html", context)
+
+
+@login_required(login_url="login")
+def updateUser(request):
+    user = request.user
+    form = UserForm(instance=user)
+    if request.method == "POST":
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect("user-profile", pk=user.id)
+    context = {"form": form}
+    return render(request, "base/update-user.html", context)
